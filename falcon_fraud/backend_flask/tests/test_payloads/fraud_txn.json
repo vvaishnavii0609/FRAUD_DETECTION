@@ -1,0 +1,9 @@
+{
+  "amount": 199999,
+  "channel": "RTGS",
+  "beneficiary_account": "ACC9999",
+  "ifsc_code": "SBIN0000001",
+  "sender_account": "SNDR9999",
+  "device_lat": 28.6139,
+  "device_lon": 77.2090
+}

@@ -1,0 +1,9 @@
+{
+  "amount": 500,
+  "channel": "UPI",
+  "beneficiary_account": "ACC1002",
+  "ifsc_code": "SBIN0001001",
+  "sender_account": "ACC1001",
+  "device_lat": 19.076,
+  "device_lon": 72.8777
+}

@@ -1,0 +1,46 @@
+features:
+  numerical:
+    - amount
+    - hour
+    - is_new_beneficiary
+    - sender_lat
+    - sender_lon
+    - beneficiary_lat
+    - beneficiary_lon
+    - device_lat
+    - device_lon
+    - merchant_lat
+    - merchant_lon
+    - geo_distance_km
+    - distance_km
+    - time_diff_mins
+    - time_since_last_txn
+  categorical:
+    - transaction_type
+    - merchant_category
+    - device_type
+    
+
+encoding_suffix: "_encoded"
+
+required_user_inputs:
+  - amount
+  - transaction_type
+  - beneficiary_account
+  - ifsc_code
+  - sender_account
+  
+
+decision_logic:
+  block_threshold: 70
+  review_threshold: 40
+
+
+model_paths:
+  rf: backend_flask/models/rf_fraud_model.pkl
+  iso: backend_flask/models/iso_forest_model.pkl
+  rf_scaler: backend_flask/models/rf_scaler.pkl
+  iso_scaler: backend_flask/models/iso_scaler.pkl
+  encoders: backend_flask/models/rf_label_encoders.pkl
+  iso_risk_scaler: backend_flask/models/iso_risk_scaler.pkl
+

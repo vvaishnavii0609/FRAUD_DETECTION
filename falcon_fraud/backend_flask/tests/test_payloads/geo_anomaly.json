@@ -1,0 +1,9 @@
+{
+  "amount": 4000,
+  "channel": "Netbanking",
+  "beneficiary_account": "ACC3002",
+  "ifsc_code": "SBIN0003001",
+  "sender_account": "ACC1001",
+  "device_lat": 12.9716,
+  "device_lon": 77.5946
+}

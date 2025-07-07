@@ -1,0 +1,9 @@
+{
+  "amount": 300,
+  "channel": "Mobile",
+  "beneficiary_account": "ACC2002",
+  "ifsc_code": "SBIN0002001",
+  "sender_account": "ACC1001",
+  "device_lat": 19.076,
+  "device_lon": 72.8777
+}
