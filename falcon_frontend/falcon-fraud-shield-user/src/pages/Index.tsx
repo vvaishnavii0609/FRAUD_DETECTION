@@ -7,7 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Shield, CreditCard, ArrowRight, CheckCircle, Info } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useEffect as useDocumentEffect } from "react";
+import Header from "@/components/Header";
 
 function exportToCSV(transactions: any[], filename: string) {
   const csvRows = [
@@ -35,8 +38,11 @@ const Index = () => {
     amount: "",
     channel: "",
     senderPhone: "",
-    senderAccount: "",
+    senderAccount: "", // N
+    sendingCustomerName: "", // NEW
+    beneficiaryCustomerName: "", // NEW
     beneficiaryAccount: "",
+    beneficiaryBankBranch: "", // NEW
     ifsc: "",
     description: ""
   });
@@ -68,14 +74,22 @@ const Index = () => {
     setHistory(userTx);
   }, [isSubmitted]);
 
+  useDocumentEffect(() => {
+    document.title = "Detectorr";
+  }, []);
+
   const validate = () => {
     const errs: any = {};
     if (!formData.amount || isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) errs.amount = "Enter a valid amount";
     if (!formData.channel) errs.channel = "Select a channel";
     if (!formData.senderPhone || !/^\d{10}$/.test(formData.senderPhone)) errs.senderPhone = "Enter a valid 10-digit phone number";
     if (!formData.senderAccount || !/^\d{6,18}$/.test(formData.senderAccount)) errs.senderAccount = "Enter a valid account number";
+    if (!formData.sendingCustomerName) errs.sendingCustomerName = "Enter the sending customer's name";
+    if (!formData.beneficiaryCustomerName) errs.beneficiaryCustomerName = "Enter the beneficiary customer's name";
     if (!formData.beneficiaryAccount || !/^\d{6,18}$/.test(formData.beneficiaryAccount)) errs.beneficiaryAccount = "Enter a valid account number";
+    if (!formData.beneficiaryBankBranch) errs.beneficiaryBankBranch = "Enter the beneficiary bank and branch";
     if (!formData.ifsc || !/^[A-Za-z]{4}\d{7}$/.test(formData.ifsc)) errs.ifsc = "Enter a valid IFSC code (e.g., HDFC0001234)";
+  
     return errs;
   };
 
@@ -122,6 +136,12 @@ const Index = () => {
     monthlySpent[month] += Number(tx.amount || 0);
   });
 
+  // Logout handler
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/login" ,{ replace: true });
+  };
+
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -140,25 +160,28 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 font-sans">
+      <Header />
+      {/* Top Accent Bar (optional, purple) */}
+      <div className="w-full h-2 bg-purple-800"></div>
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        
+      {/* Navigation Bar */}
+      {/* <nav className="ml-10 flex gap-6 text-blue-700 text-lg font-medium">
+        {/* <Link to="/main" className="border-b-2 border-blue-600 pb-1">Home</Link> */}
+        {/* <Link to="/transactions" className="hover:border-b-2 hover:border-blue-400 pb-1">Transactions</Link> */}
+        {/* <Link to="/profile" className="hover:border-b-2 hover:border-blue-400 pb-1">Profile</Link>  */}
+      {/* </nav> */}
+      {/* Spacer */}
+      {/* <div className="flex-1"></div>
+      <Button variant="outline" size="sm" onClick={handleLogout}>
+        Logout
+      </Button> */}
       
-              {/* <span className="text-2xl font-bold text-gray-900">Falcon Fraud</span> */}
-            
-            {/* <Link to="/login">
-              <Button variant="outline" size="sm">Logout</Button>
-            </Link> */}
-          
-        
-      </header>
-
       {/* Main Content */}
       <main className="max-w-2xl mx-auto px-4 py-12">
         <div className="text-center mb-8">
           <CreditCard className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Secure Transaction Portal</h1>
+          <h1 className="text-4xl font-bold text-blue-900 mb-4">Detectorr</h1>
           <p className="text-xl text-gray-600">Protected by AI-powered fraud detection</p>
         </div>
 
@@ -301,6 +324,46 @@ const Index = () => {
                 {errors.senderAccount && <div className="text-red-500 text-sm">{errors.senderAccount}</div>}
               </div>
 
+              {/* Sending Customer's Name */}
+              <div>
+                <Label htmlFor="sendingCustomerName">Sending Customer's Name</Label>
+                <Input
+                  id="sendingCustomerName"
+                  type="text"
+                  placeholder="Enter your name"
+                  value={formData.sendingCustomerName}
+                  onChange={(e) => handleInputChange('sendingCustomerName', e.target.value)}
+                  className="mt-1"
+                />
+                {errors.sendingCustomerName && <div className="text-red-500 text-sm">{errors.sendingCustomerName}</div>}
+              </div>
+              {/* Beneficiary Customer Account Name */}
+              <div>
+                <Label htmlFor="beneficiaryCustomerName">Beneficiary Customer Account Name</Label>
+                <Input
+                  id="beneficiaryCustomerName"
+                  type="text"
+                  placeholder="Enter beneficiary's name"
+                  value={formData.beneficiaryCustomerName}
+                  onChange={(e) => handleInputChange('beneficiaryCustomerName', e.target.value)}
+                  className="mt-1"
+                />
+                {errors.beneficiaryCustomerName && <div className="text-red-500 text-sm">{errors.beneficiaryCustomerName}</div>}
+              </div>
+              {/* Name of the beneficiary bank and branch */}
+              <div>
+                <Label htmlFor="beneficiaryBankBranch">Beneficiary Bank & Branch</Label>
+                <Input
+                  id="beneficiaryBankBranch"
+                  type="text"
+                  placeholder="Enter beneficiary bank and branch"
+                  value={formData.beneficiaryBankBranch}
+                  onChange={(e) => handleInputChange('beneficiaryBankBranch', e.target.value)}
+                  className="mt-1"
+                />
+                {errors.beneficiaryBankBranch && <div className="text-red-500 text-sm">{errors.beneficiaryBankBranch}</div>}
+              </div>
+
               <div>
                 <Label htmlFor="beneficiaryAccount">Beneficiary Account Number</Label>
                 <TooltipProvider>
@@ -383,38 +446,7 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {/* Transaction History */}
-        <div className="mt-12">
-          <h2 className="text-xl font-bold mb-4">Transaction History</h2>
-          {filteredHistory.length === 0 ? (
-            <div className="text-gray-500">No transactions found.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white rounded shadow">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-2">Date/Time</th>
-                    <th className="px-4 py-2">Amount</th>
-                    <th className="px-4 py-2">Channel</th>
-                    <th className="px-4 py-2">Beneficiary</th>
-                    <th className="px-4 py-2">IFSC</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredHistory.slice().reverse().map((tx, idx) => (
-                    <tr key={tx.id || idx} className="border-t">
-                      <td className="px-4 py-2 font-mono text-xs">{tx.timestamp}</td>
-                      <td className="px-4 py-2">₹{tx.amount}</td>
-                      <td className="px-4 py-2">{tx.channel}</td>
-                      <td className="px-4 py-2">{tx.beneficiaryAccount}</td>
-                      <td className="px-4 py-2">{tx.ifsc}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+        {/* REMOVE: Transaction History section and related code */}
       </main>
     </div>
   );

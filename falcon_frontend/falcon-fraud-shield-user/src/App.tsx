@@ -9,6 +9,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import Transactions from "./pages/transactions";
+import TransactionsNew from "./pages/transactions_new";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -33,30 +36,8 @@ function ProtectedRoute({ children }: { children: JSX.Element }) {
   return children;
 }
 
-function NavBar() {
-  const { user, setUser } = useAuth();
-  const navigate = useNavigate();
-  const handleLogout = () => {
-    setUser(null);
-    navigate("/login");
-  };
-  return (
-    <nav className="bg-white shadow-sm border-b mb-4">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-14">
-        <span className="text-xl font-bold text-blue-800 flex items-center gap-2">
-          <img src="/bank-logo.svg" alt="Bank Logo" className="h-7 w-7" />
-          Falcon Bank
-        </span>
-        <div className="space-x-2">
-          {!user && <Button variant="outline" size="sm" onClick={() => navigate("/login")}>Login</Button>}
-          {!user && <Button variant="outline" size="sm" onClick={() => navigate("/signup")}>Sign Up</Button>}
-          {user && <Button variant="outline" size="sm" onClick={handleLogout}>Logout</Button>}
-        </div>
-      </div>
-    </nav>
-  );
-}
-
+// Remove NavBar component and all references to Falcon Bank, logo, and Logout button.
+// Only render navigation and Logout on protected pages (e.g., inside Index or a dedicated layout component if needed).
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -64,11 +45,14 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
-          <NavBar />
           <Routes>
+            <Route path="/" element={<LoginWithAuth />} />
             <Route path="/login" element={<LoginWithAuth />} />
             <Route path="/signup" element={<SignupWithAuth />} />
-            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/main" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
+            <Route path="/transactions/new" element={<ProtectedRoute><TransactionsNew /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

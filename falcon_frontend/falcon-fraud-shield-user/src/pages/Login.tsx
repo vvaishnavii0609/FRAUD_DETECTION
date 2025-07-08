@@ -54,7 +54,7 @@ export default function Login({ setUser }: { setUser?: (u: any) => void }) {
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
       if (setUser) setUser(user);
-      navigate("/");
+      navigate("/main");
     } else {
       setError("User not found.");
     }
@@ -64,8 +64,32 @@ export default function Login({ setUser }: { setUser?: (u: any) => void }) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="flex flex-col items-center">
-          <img src="/bank-logo.svg" alt="Bank Logo" className="h-12 w-12 mb-2" />
-          <CardTitle className="text-2xl text-blue-800 text-center">Falcon Bank Login</CardTitle>
+          {/* Button group for Login/Sign Up navigation */}
+          <div className="flex mb-4 gap-2 w-full">
+            <Button
+              variant="default"
+              className="w-1/2 bg-blue-700 text-white cursor-default"
+              disabled
+            >
+              Login
+            </Button>
+            <Button
+              variant="outline"
+              className="w-1/2"
+              onClick={() => navigate("/signup")}
+            >
+              Sign Up
+            </Button>
+          </div>
+          {/* Detectorr SVG Logo */}
+          <span className="mb-2">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="22" fill="#2563eb" stroke="#fff" strokeWidth="4" />
+              <path d="M24 14a8 8 0 018 8c0 6-8 12-8 12s-8-6-8-12a8 8 0 018-8z" fill="#fff" />
+              <circle cx="24" cy="22" r="3" fill="#2563eb" />
+            </svg>
+          </span>
+          <CardTitle className="text-2xl text-blue-800 text-center">Detectorr Login</CardTitle>
         </CardHeader>
         <CardContent>
           {step === "login" && (
@@ -90,6 +114,12 @@ export default function Login({ setUser }: { setUser?: (u: any) => void }) {
               {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
             </form>
           )}
+          {/* Sign Up Button below login form */}
+          {step === "login" && (
+            <div className="mt-4 text-center">
+              <Button variant="outline" className="w-full" onClick={() => navigate("/signup")}>Sign Up</Button>
+            </div>
+          )}
           {step === "otp" && (
             <form onSubmit={handleVerifyOtp} className="space-y-6">
               <div>
@@ -111,6 +141,10 @@ export default function Login({ setUser }: { setUser?: (u: any) => void }) {
               </div>
               <Button type="submit" className="w-full h-12 text-lg">Verify OTP & Login</Button>
               {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+              {/* Back to Login link */}
+              <div className="mt-4 text-center">
+                <button type="button" className="text-blue-700 underline" onClick={() => setStep("login")}>Back to Login</button>
+              </div>
             </form>
           )}
         </CardContent>

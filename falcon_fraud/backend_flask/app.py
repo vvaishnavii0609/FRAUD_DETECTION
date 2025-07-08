@@ -199,6 +199,17 @@ def predict():
                 "violation_reason": data["violation_reason"]
             }), 200
 
+        optional_fields = [
+            "beneficiary_name",
+            "beneficiary_branch",
+            "beneficiary_bank_name",
+            "sender_name",
+            "sender_address"
+        ]
+
+        # Add them to data (even if not used in model)
+        for field in optional_fields:
+            data[field] = data.get(field, "")
 
         # ✅ Validate required fields from YAML
         required_fields = config["required_user_inputs"]
@@ -321,7 +332,11 @@ def predict():
         txn_log_row = {
             "sender_account": data["sender_account"],
             "beneficiary_account": data["beneficiary_account"],
-            "timestamp": data["timestamp"]
+            "timestamp": data["timestamp"],
+            "beneficiary_name": data["beneficiary_name"],
+            "beneficiary_branch": data["beneficiary_branch"],
+            "beneficiary_bank_name": data["beneficiary_bank_name"],
+            "sender_name": data["sender_name"]
         }
         txn_df.loc[len(txn_df)] = txn_log_row
         os.makedirs(os.path.dirname(txn_log_path), exist_ok=True)
@@ -331,7 +346,7 @@ def predict():
 
         
         # 🚨 Escalate manually for extremely high-value transactions
-        if data["amount"] >= 5000000:  # ₹50 Lakhs
+        if data["amount"] >= 5000000: 
             decision = "🔍 Send to Admin"
             risk_level = "⚠️ Medium Risk" if risk_score < config["decision_logic"]["block_threshold"] else "❌ High Risk"
 

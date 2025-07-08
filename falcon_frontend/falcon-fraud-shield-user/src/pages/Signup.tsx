@@ -44,6 +44,23 @@ export default function Signup({ setUser }: { setUser?: (u: any) => void }) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
+          {/* Button group for Login/Sign Up navigation */}
+          <div className="flex mb-4 gap-2">
+            <Button
+              variant="outline"
+              className="w-1/2"
+              onClick={() => navigate("/login")}
+            >
+              Login
+            </Button>
+            <Button
+              variant="default"
+              className="w-1/2 bg-blue-700 text-white cursor-default"
+              disabled
+            >
+              Sign Up
+            </Button>
+          </div>
           <CardTitle className="text-2xl text-center">Sign Up</CardTitle>
         </CardHeader>
         <CardContent>

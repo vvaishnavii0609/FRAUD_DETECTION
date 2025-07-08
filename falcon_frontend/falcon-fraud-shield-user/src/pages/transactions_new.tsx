@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, CreditCard, ArrowRight, CheckCircle, Info } from "lucide-react";
+import { ArrowRight, CheckCircle, Info } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import Header from "@/components/Header";
 
-const Index = () => {
+const TransactionsNew = () => {
   const [formData, setFormData] = useState({
     amount: "",
     channel: "",
@@ -20,19 +20,13 @@ const Index = () => {
     description: ""
   });
   const [errors, setErrors] = useState<any>({});
-  const [response, setResponse] = useState<any>(null);
-  const [history, setHistory] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const navigate = useNavigate();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
-
-  useEffect(() => {
-    const existing = JSON.parse(localStorage.getItem('transactions') || '[]');
-    setHistory(existing);
-  }, [isSubmitted]);
 
   const validate = () => {
     const errs: any = {};
@@ -63,8 +57,8 @@ const Index = () => {
     localStorage.setItem('transactions', JSON.stringify(existingTransactions));
     setIsSubmitting(false);
     setIsSubmitted(true);
-    setHistory(existingTransactions);
     toast("Transaction submitted successfully!");
+    setTimeout(() => navigate("/transactions"), 1200);
   };
 
   if (isSubmitted) {
@@ -75,9 +69,6 @@ const Index = () => {
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-2">Transaction Submitted</h2>
             <p className="text-gray-600 mb-6">Your transaction is being processed and will be reviewed shortly.</p>
-            <Button onClick={() => { setIsSubmitted(false); }} className="w-full">
-              Submit Another Transaction
-            </Button>
           </CardContent>
         </Card>
       </div>
@@ -86,31 +77,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <Shield className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">Falcon Fraud</span>
-            </div>
-            <Link to="/admin">
-              <Button variant="outline" size="sm">
-                Admin Dashboard
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
+      <Header />
       <main className="max-w-2xl mx-auto px-4 py-12">
-        <div className="text-center mb-8">
-          <CreditCard className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Secure Transaction Portal</h1>
-          <p className="text-xl text-gray-600">Protected by AI-powered fraud detection</p>
-        </div>
-
         <Card className="shadow-xl">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Submit Transaction</CardTitle>
@@ -149,17 +117,19 @@ const Index = () => {
                     <TooltipContent>Select NEFT, UPI, RTGS, or IMPS</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <Select value={formData.channel} onValueChange={(value) => handleInputChange('channel', value)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select channel" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NEFT">NEFT</SelectItem>
-                    <SelectItem value="UPI">UPI</SelectItem>
-                    <SelectItem value="RTGS">RTGS</SelectItem>
-                    <SelectItem value="IMPS">IMPS</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  id="channel"
+                  value={formData.channel}
+                  onChange={e => handleInputChange('channel', e.target.value)}
+                  required
+                  className="mt-1 w-full border rounded px-3 py-2"
+                >
+                  <option value="">Select channel</option>
+                  <option value="NEFT">NEFT</option>
+                  <option value="UPI">UPI</option>
+                  <option value="RTGS">RTGS</option>
+                  <option value="IMPS">IMPS</option>
+                </select>
                 {errors.channel && <div className="text-red-500 text-sm">{errors.channel}</div>}
               </div>
 
@@ -288,44 +258,9 @@ const Index = () => {
             </form>
           </CardContent>
         </Card>
-
-        {/* Transaction History */}
-        <div className="mt-12">
-          <h2 className="text-xl font-bold mb-4">Transaction History</h2>
-          {history.length === 0 ? (
-            <div className="text-gray-500">No transactions submitted yet.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white rounded shadow">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-2">Date/Time</th>
-                    <th className="px-4 py-2">Amount</th>
-                    <th className="px-4 py-2">Channel</th>
-                    <th className="px-4 py-2">Beneficiary</th>
-                    <th className="px-4 py-2">Risk</th>
-                    <th className="px-4 py-2">Decision</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.slice().reverse().map((tx, idx) => (
-                    <tr key={tx.id || idx} className="border-t">
-                      <td className="px-4 py-2 font-mono text-xs">{tx.date || tx.timestamp}</td>
-                      <td className="px-4 py-2">₹{tx.amount}</td>
-                      <td className="px-4 py-2">{tx.channel}</td>
-                      <td className="px-4 py-2">{tx.beneficiaryAccount}</td>
-                      <td className="px-4 py-2">{tx.risk_level || '-'}</td>
-                      <td className="px-4 py-2">{tx.final_decision || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
       </main>
     </div>
   );
 };
 
-export default Index;
+export default TransactionsNew; 
