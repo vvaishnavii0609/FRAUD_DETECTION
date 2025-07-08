@@ -2,95 +2,62 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
-export default function Login() {
-  const [form, setForm] = useState({
-    phoneOrAccount: "",
-    password: ""
-  });
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "adminpass";
+
+const Login = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    // Get users from localStorage (mock DB)
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    // Ensure admin user exists
-    const adminUser = {
-      id: 0,
-      phone: "9998887777",
-      account: "9876543211",
-      password: "adminpass",
-      name: "Admin User",
-      role: "admin"
-    };
-    if (!users.some((u: any) => u.role === "admin")) {
-      users.push(adminUser);
-      localStorage.setItem("users", JSON.stringify(users));
-    }
-    const user = users.find(
-      (u: any) =>
-        (u.phone === form.phoneOrAccount || u.account === form.phoneOrAccount) &&
-        u.password === form.password
-    );
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
-      if (user.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/");
-      }
+    if (username === ADMIN_USER && password === ADMIN_PASS) {
+      localStorage.setItem("admin_logged_in", "true");
+      localStorage.setItem("user", JSON.stringify({ username: "admin", role: "admin" }));
+      navigate("/");
     } else {
-      setError("Invalid credentials. Please try again.");
+      setError("Invalid credentials");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Login</CardTitle>
+          <CardTitle>Admin Login</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="phoneOrAccount">Phone or Account Number</Label>
-              <Input
-                id="phoneOrAccount"
-                name="phoneOrAccount"
+              <label className="block text-sm font-medium text-gray-700">Username</label>
+              <input
                 type="text"
-                placeholder="Enter phone or account number"
-                value={form.phoneOrAccount}
-                onChange={handleChange}
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
                 required
-                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <input
                 type="password"
-                placeholder="Enter password"
-                value={form.password}
-                onChange={handleChange}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
                 required
-                className="mt-1"
               />
             </div>
             {error && <div className="text-red-500 text-sm">{error}</div>}
-            <Button type="submit" className="w-full h-12 text-lg">Login</Button>
+            <Button type="submit" className="w-full">Login</Button>
           </form>
         </CardContent>
       </Card>
     </div>
   );
-} 
+};
+
+export default Login; 

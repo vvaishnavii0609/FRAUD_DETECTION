@@ -1,5 +1,8 @@
-from backend_flask.decision_logic import final_decision  # Replace 'your_module' with the actual filename (without .py)
+import sys
+import os
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from decision_logic import final_decision
 def test_high_risk_low_amount_should_go_to_admin():
     rf_pred = 0
     risk_level = "❌ High Risk"

@@ -99,24 +99,36 @@ const Index = () => {
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    // Attach user info to transaction
-    const u = JSON.parse(localStorage.getItem("user") || "null");
-    const transaction = {
-      id: Math.random().toString(36).substr(2, 9),
-      ...formData,
-      senderAccount: u?.account,
-      senderPhone: u?.phone,
-      timestamp: new Date().toISOString(),
-      status: 'pending'
-    };
-    const existingTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-    existingTransactions.push(transaction);
-    localStorage.setItem('transactions', JSON.stringify(existingTransactions));
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    setHistory(existingTransactions.filter((tx: any) => tx.senderAccount === u?.account || tx.senderPhone === u?.phone));
-    toast("Transaction submitted successfully!");
+    try {
+      const u = JSON.parse(localStorage.getItem("user") || "null");
+      const transaction = {
+        user_id: u?.id, // Use backend user id
+        amount: formData.amount,
+        channel: formData.channel,
+        senderPhone: formData.senderPhone,
+        senderAccount: formData.senderAccount,
+        sendingCustomerName: formData.sendingCustomerName,
+        beneficiaryCustomerName: formData.beneficiaryCustomerName,
+        beneficiaryAccount: formData.beneficiaryAccount,
+        beneficiaryBankBranch: formData.beneficiaryBankBranch,
+        ifsc: formData.ifsc,
+        description: formData.description
+      };
+      const response = await fetch('http://localhost:5000/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaction)
+      });
+      if (!response.ok) throw new Error('Failed to submit transaction');
+      const result = await response.json();
+      setResponse(result);
+      setIsSubmitting(false);
+      setIsSubmitted(true);
+      toast(`Transaction submitted! Status: ${result.status}`);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      toast("Error submitting transaction: " + err.message);
+    }
   };
 
   // Filtering logic
