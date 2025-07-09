@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Key, Smartphone } from "lucide-react";
+import { generateOTP, verifyOTP } from "@/utils/api";
+import { toast } from "sonner";
 
 export default function Login({ setUser }: { setUser?: (u: any) => void }) {
   const [step, setStep] = useState<"login" | "otp">("login");
@@ -13,138 +15,147 @@ export default function Login({ setUser }: { setUser?: (u: any) => void }) {
     password: ""
   });
   const [otp, setOtp] = useState("");
-  const [generatedOtp, setGeneratedOtp] = useState("");
+  const [userId, setUserId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSendOtp = (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    // Check if user exists in localStorage
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const user = users.find(
-      (u: any) => u.phone === form.phoneOrAccount || u.account === form.phoneOrAccount
-    );
-    if (!user) {
-      setError("User not found. Please check your phone/account number.");
-      return;
+    setIsLoading(true);
+    
+    try {
+      const response = await generateOTP(form.phoneOrAccount);
+      setUserId(response.user_id);
+      setStep("otp");
+      toast.success("OTP sent successfully! Check console for OTP.");
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setIsLoading(false);
     }
-    // Generate OTP (mock: 6-digit random)
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(otpCode);
-    setStep("otp");
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (otp !== generatedOtp) {
-      setError("Invalid OTP. Please try again.");
-      return;
-    }
-    // Log in user
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const user = users.find(
-      (u: any) => u.phone === form.phoneOrAccount || u.account === form.phoneOrAccount
-    );
-    if (user) {
+    setIsLoading(true);
+    
+    try {
+      const response = await verifyOTP(userId!, otp);
+      const user = {
+        id: response.id,
+        name: response.name,
+        phone: response.phone,
+        account: response.phone // Using phone as account number for demo
+      };
+      
       localStorage.setItem("user", JSON.stringify(user));
       if (setUser) setUser(user);
+      toast.success("Login successful!");
       navigate("/main");
-    } else {
-      setError("User not found.");
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="flex flex-col items-center">
-          {/* Button group for Login/Sign Up navigation */}
-          <div className="flex mb-4 gap-2 w-full">
-            <Button
-              variant="default"
-              className="w-1/2 bg-blue-700 text-white cursor-default"
-              disabled
-            >
-              Login
-            </Button>
-            <Button
-              variant="outline"
-              className="w-1/2"
-              onClick={() => navigate("/signup")}
-            >
-              Sign Up
-            </Button>
-          </div>
-          {/* Detectorr SVG Logo */}
-          <span className="mb-2">
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-              <circle cx="24" cy="24" r="22" fill="#2563eb" stroke="#fff" strokeWidth="4" />
-              <path d="M24 14a8 8 0 018 8c0 6-8 12-8 12s-8-6-8-12a8 8 0 018-8z" fill="#fff" />
-              <circle cx="24" cy="22" r="3" fill="#2563eb" />
-            </svg>
-          </span>
-          <CardTitle className="text-2xl text-blue-800 text-center">Detectorr Login</CardTitle>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold text-blue-900">
+            {step === "login" ? "Login to Detectorr" : "Enter OTP"}
+          </CardTitle>
+          <p className="text-gray-600">
+            {step === "login" 
+              ? "Enter your phone number to receive OTP" 
+              : "Enter the 6-digit OTP sent to your phone"
+            }
+          </p>
         </CardHeader>
         <CardContent>
-          {step === "login" && (
-            <form onSubmit={handleSendOtp} className="space-y-6">
+          {step === "login" ? (
+            <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
-                <Label htmlFor="phoneOrAccount">Phone or Account Number</Label>
+                <Label htmlFor="phoneOrAccount">Phone Number</Label>
                 <div className="relative">
+                  <Smartphone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="phoneOrAccount"
                     name="phoneOrAccount"
-                    type="text"
-                    placeholder="Enter phone or account number"
+                    type="tel"
+                    placeholder="Enter your phone number"
                     value={form.phoneOrAccount}
                     onChange={handleChange}
+                    className="pl-10"
                     required
-                    className="mt-1 pl-10"
                   />
-                  <Smartphone className="absolute left-2 top-2.5 h-5 w-5 text-gray-400" />
                 </div>
               </div>
-              <Button type="submit" className="w-full h-12 text-lg">Send OTP</Button>
-              {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+              {error && <div className="text-red-500 text-sm">{error}</div>}
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading}
+              >
+                {isLoading ? "Sending OTP..." : "Send OTP"}
+              </Button>
+              
+              {/* Add signup link */}
+              <div className="text-center">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => navigate("/signup")}
+                >
+                  Don't have an account? Sign Up
+                </Button>
+              </div>
             </form>
-          )}
-          {/* Sign Up Button below login form */}
-          {step === "login" && (
-            <div className="mt-4 text-center">
-              <Button variant="outline" className="w-full" onClick={() => navigate("/signup")}>Sign Up</Button>
-            </div>
-          )}
-          {step === "otp" && (
-            <form onSubmit={handleVerifyOtp} className="space-y-6">
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div>
-                <Label htmlFor="otp">Enter OTP</Label>
+                <Label htmlFor="otp">OTP Code</Label>
                 <div className="relative">
+                  <Key className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     id="otp"
-                    name="otp"
                     type="text"
-                    placeholder="Enter the OTP sent to your phone"
+                    placeholder="Enter 6-digit OTP"
                     value={otp}
-                    onChange={e => setOtp(e.target.value)}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="pl-10"
+                    maxLength={6}
                     required
-                    className="mt-1 pl-10"
                   />
-                  <Key className="absolute left-2 top-2.5 h-5 w-5 text-gray-400" />
                 </div>
-                <div className="text-xs text-blue-600 mt-1">(Demo: Your OTP is <span className="font-mono">{generatedOtp}</span>)</div>
               </div>
-              <Button type="submit" className="w-full h-12 text-lg">Verify OTP & Login</Button>
-              {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
-              {/* Back to Login link */}
-              <div className="mt-4 text-center">
-                <button type="button" className="text-blue-700 underline" onClick={() => setStep("login")}>Back to Login</button>
-              </div>
+              {error && <div className="text-red-500 text-sm">{error}</div>}
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading}
+              >
+                {isLoading ? "Verifying..." : "Verify OTP"}
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full"
+                onClick={() => setStep("login")}
+              >
+                Back to Login
+              </Button>
             </form>
           )}
         </CardContent>

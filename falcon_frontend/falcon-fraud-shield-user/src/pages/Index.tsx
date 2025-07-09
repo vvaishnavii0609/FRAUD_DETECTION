@@ -57,6 +57,7 @@ const Index = () => {
     beneficiary: ""
   });
   const [user, setUser] = useState<any>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const navigate = useNavigate();
 
   const handleInputChange = (field: string, value: string) => {
@@ -66,13 +67,39 @@ const Index = () => {
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem("user") || "null");
     setUser(u);
-    const allTx = JSON.parse(localStorage.getItem("transactions") || "[]");
-    // Filter transactions for this user (by account or phone)
-    const userTx = allTx.filter((tx: any) =>
-      tx.senderAccount === u?.account || tx.senderPhone === u?.phone
-    );
-    setHistory(userTx);
+    if (u?.id) {
+      fetchUserTransactions(u.id);
+    }
   }, [isSubmitted]);
+
+  // Get user location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
+        },
+        (error) => {
+          // User denied or error, do nothing (backend will fallback)
+        }
+      );
+    }
+  }, []);
+
+  const fetchUserTransactions = async (userId: number) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/transactions?user_id=${userId}`);
+      if (response.ok) {
+        const transactions = await response.json();
+        setHistory(transactions);
+      }
+    } catch (error) {
+      console.error('Failed to fetch transactions:', error);
+    }
+  };
 
   useDocumentEffect(() => {
     document.title = "Detectorr";
@@ -101,19 +128,28 @@ const Index = () => {
     setIsSubmitting(true);
     try {
       const u = JSON.parse(localStorage.getItem("user") || "null");
-      const transaction = {
+      const transaction: any = {
         user_id: u?.id, // Use backend user id
         amount: formData.amount,
         channel: formData.channel,
+        transaction_type: formData.channel, // for backend compatibility
         senderPhone: formData.senderPhone,
         senderAccount: formData.senderAccount,
+        sender_account: formData.senderAccount, // for backend compatibility
         sendingCustomerName: formData.sendingCustomerName,
         beneficiaryCustomerName: formData.beneficiaryCustomerName,
         beneficiaryAccount: formData.beneficiaryAccount,
+        beneficiary_account: formData.beneficiaryAccount, // for backend compatibility
         beneficiaryBankBranch: formData.beneficiaryBankBranch,
         ifsc: formData.ifsc,
+        ifsc_code: formData.ifsc, // for backend compatibility
         description: formData.description
       };
+      // Add location if available
+      if (userLocation) {
+        transaction.device_lat = userLocation.lat;
+        transaction.device_lon = userLocation.lon;
+      }
       const response = await fetch('http://localhost:5000/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -124,7 +160,23 @@ const Index = () => {
       setResponse(result);
       setIsSubmitting(false);
       setIsSubmitted(true);
-      toast(`Transaction submitted! Status: ${result.status}`);
+      
+      // Show fraud detection results
+      if (result.fraud_detection) {
+        const fraud = result.fraud_detection;
+        // Show user-friendly message based on status
+        if (result.status === 'approved') {
+          toast.success("Transaction approved! Your payment has been processed successfully.");
+        } else if (result.status === 'blocked') {
+          toast.error("Transaction blocked for security reasons. Please contact support.");
+        } else if (result.status === 'pending_admin_review') {
+          toast.info("Transaction under review. You'll be notified once processed.");
+        } else {
+          toast.info("Transaction submitted successfully!");
+        }
+      } else {
+        toast.success("Transaction submitted successfully!");
+      }
     } catch (err: any) {
       setIsSubmitting(false);
       toast("Error submitting transaction: " + err.message);
@@ -133,9 +185,9 @@ const Index = () => {
 
   // Filtering logic
   const filteredHistory = history.filter(tx => {
-    const matchDate = filter.date ? tx.timestamp?.slice(0, 10) === filter.date : true;
+    const matchDate = filter.date ? tx.created_at?.slice(0, 10) === filter.date : true;
     const matchAmount = filter.amount ? tx.amount === filter.amount : true;
-    const matchBeneficiary = filter.beneficiary ? tx.beneficiaryAccount?.includes(filter.beneficiary) : true;
+    const matchBeneficiary = filter.beneficiary ? tx.details?.beneficiaryAccount?.includes(filter.beneficiary) : true;
     return matchDate && matchAmount && matchBeneficiary;
   });
 
@@ -143,7 +195,7 @@ const Index = () => {
   const totalSpent = history.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
   const monthlySpent: { [month: string]: number } = {};
   history.forEach(tx => {
-    const month = tx.timestamp?.slice(0, 7) || "";
+    const month = tx.created_at?.slice(0, 7) || "";
     if (!monthlySpent[month]) monthlySpent[month] = 0;
     monthlySpent[month] += Number(tx.amount || 0);
   });
@@ -458,7 +510,10 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {/* REMOVE: Transaction History section and related code */}
+        {/* Button to go to Transaction History page */}
+        <div className="flex justify-end mt-4">
+          <Button variant="outline" onClick={() => navigate("/transactions")}>View Transaction History</Button>
+        </div>
       </main>
     </div>
   );
